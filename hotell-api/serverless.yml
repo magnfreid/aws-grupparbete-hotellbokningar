@@ -13,11 +13,18 @@ provider:
     role: ${env:ROLE}
 
 functions:
-  CreateBooking:
+  CreateReservation:
     handler: functions/CreateReservation/index.handler
     events:
       - httpApi:
           path: /reservation
+          method: POST
+
+  CreateRooms:
+    handler: functions/CreateRooms/index.handler
+    events:
+      - httpApi:
+          path: /create
           method: POST
 
   DeleteBooking:
