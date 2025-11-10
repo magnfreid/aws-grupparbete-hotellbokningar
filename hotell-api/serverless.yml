@@ -41,7 +41,7 @@ functions:
           path: /rooms
           method: GET
 
-  GetAllBookings:
+  GetAllReservations:
     handler: functions/GetAllReservations/index.handler
     events:
       - httpApi:
