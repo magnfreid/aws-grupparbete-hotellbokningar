@@ -11,9 +11,32 @@ provider:
   # domain: api.example.com
 
 functions:
-  hello:
-    handler: handler.hello
+  CreateBooking:
+    handler: functions/CreateReservation/index.handler
     events:
       - httpApi:
           path: /
-          method: get
+          method: POST
+
+
+  DeleteBooking:
+    handler: functions/DeleteReservation/index.handler
+    events:
+      - httpApi:
+          path: /
+          method: DELETE
+
+  GetAllRooms:
+    handler: functions/GetAllRooms/index.handler
+    events:
+      - httpApi:
+          path: /
+          method: GET
+
+
+  GetAllBookings:
+    handler: functions/GetAllReservations/index.handler
+    events:
+      - httpApi:
+          path: /
+          method: GET
