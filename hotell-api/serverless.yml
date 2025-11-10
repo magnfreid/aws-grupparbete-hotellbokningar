@@ -1,5 +1,7 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
 org: ${env:ORG}
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: grupprojekt
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: hotell-api
 
@@ -10,7 +12,6 @@ provider:
   iam:
     role: ${env:ROLE}
 
-
 functions:
   CreateBooking:
     handler: functions/CreateReservation/index.handler
@@ -18,7 +19,6 @@ functions:
       - httpApi:
           path: /reservation
           method: POST
-
 
   DeleteBooking:
     handler: functions/DeleteReservation/index.handler
@@ -34,10 +34,27 @@ functions:
           path: /rooms
           method: GET
 
-
   GetAllBookings:
     handler: functions/GetAllReservations/index.handler
     events:
       - httpApi:
           path: /reservation
           method: GET
+
+resources:
+  Resources:
+    roomsDb:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: room-db
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
