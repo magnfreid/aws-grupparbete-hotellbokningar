@@ -1,21 +1,22 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: magnfreid
+org: ${env:ORG}
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: hotell-api
 
 provider:
   name: aws
   runtime: nodejs20.x
-  # Uncomment to easily set up a custom domain. Read the docs for more details:
-  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
-  # domain: api.example.com
+  region: eu-north-1
+  iam:
+    role: ${env:ROLE}
+
 
 functions:
   CreateBooking:
     handler: functions/CreateReservation/index.handler
     events:
       - httpApi:
-          path: /
+          path: /reservation
           method: POST
 
 
@@ -23,14 +24,14 @@ functions:
     handler: functions/DeleteReservation/index.handler
     events:
       - httpApi:
-          path: /
+          path: /reservation/{id}
           method: DELETE
 
   GetAllRooms:
     handler: functions/GetAllRooms/index.handler
     events:
       - httpApi:
-          path: /
+          path: /rooms
           method: GET
 
 
@@ -38,5 +39,5 @@ functions:
     handler: functions/GetAllReservations/index.handler
     events:
       - httpApi:
-          path: /
+          path: /reservation
           method: GET
