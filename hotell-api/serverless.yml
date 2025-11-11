@@ -27,7 +27,7 @@ functions:
           path: /create
           method: POST
 
-  DeleteBooking:
+  DeleteReservation:
     handler: functions/DeleteReservation/index.handler
     events:
       - httpApi:
