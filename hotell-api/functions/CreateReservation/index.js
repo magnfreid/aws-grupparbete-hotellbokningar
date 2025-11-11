@@ -18,19 +18,20 @@ exports.handler = async (event) => {
         SK: `ROOM-${roomId}`
       },
       UpdateExpression:
-         "SET reservedId = :reservationId, checkIn = :checkInDate, checkOut = :checkOutDate, guests = :guestList, #n = :name, email = :email",
+         "SET reservedId = :reservationId, checkIn = :checkInDate, checkOut = :checkOutDate, guests = :guests, #n = :name, email = :email",
       ExpressionAttributeNames: {
-          "#n": "name"
+          "#n": "name",
+          "#c": "capacity"
       },
-      ConditionExpression: "reservedId = :nullVal",
+      ConditionExpression: "reservedId = :nullVal AND #c >= :guests",
       ExpressionAttributeValues: {
           ":nullVal": null,
           ":reservationId": reservationId,
           ":checkInDate": checkInDate,
           ":checkOutDate": checkOutDate,
-          ":guestList": guests,
           ":name": name,
-          ":email": email
+          ":email": email,
+          ":guests": guests,
       },
       ReturnValues: "ALL_NEW"
         };
@@ -40,7 +41,9 @@ exports.handler = async (event) => {
     return sendResponse(200, { message: "Success", reservation: result.Attributes });
 
   } catch (err) {
-    console.error("Reservation failed:", err.message);
+
+    console.error("Reservation failed:", {message: "To many guests"});
+
     return sendResponse(400, { error: err.message });
   }
 };
