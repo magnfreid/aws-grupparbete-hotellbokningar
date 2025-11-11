@@ -40,7 +40,6 @@ functions:
       - httpApi:
           path: /rooms
           method: GET
-
   GetAllReservations:
     handler: functions/GetAllReservations/index.handler
     events:
