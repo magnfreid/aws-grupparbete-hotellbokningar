@@ -7,7 +7,7 @@ const db = DynamoDBDocumentClient.from(client);
 
 exports.handler = async (event) => {
   try {
-    const { roomId, checkInDate, checkOutDate, guests, roomType } = JSON.parse(event.body);
+    const { roomId, checkInDate, checkOutDate, guests, name, email } = JSON.parse(event.body);
 
     const reservationId = Math.floor(Math.random() * 1000000).toString();
 
@@ -17,16 +17,23 @@ exports.handler = async (event) => {
         PK: "hotel",
         SK: `ROOM-${roomId}`
       },
-      UpdateExpression: "SET reservedId = :reservationId, checkIn = :checkInDate, checkOut = :checkOutDate, guests = :guestList",
-      ConditionExpression: "attribute_not_exists(reservedId)",
+      UpdateExpression:
+         "SET reservedId = :reservationId, checkIn = :checkInDate, checkOut = :checkOutDate, guests = :guestList, #n = :name, email = :email",
+      ExpressionAttributeNames: {
+          "#n": "name"
+      },
+      ConditionExpression: "reservedId = :nullVal",
       ExpressionAttributeValues: {
-        ":reservationId": reservationId,
-        ":checkInDate": checkInDate,
-        ":checkOutDate": checkOutDate,
-        ":guestList": guests
+          ":nullVal": null,
+          ":reservationId": reservationId,
+          ":checkInDate": checkInDate,
+          ":checkOutDate": checkOutDate,
+          ":guestList": guests,
+          ":name": name,
+          ":email": email
       },
       ReturnValues: "ALL_NEW"
-    };
+        };
 
     const result = await db.send(new UpdateCommand(params));
 
