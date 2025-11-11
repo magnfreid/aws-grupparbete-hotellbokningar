@@ -3,7 +3,7 @@ const {
 	DynamoDBDocumentClient,
 	UpdateCommand,
 } = require("@aws-sdk/lib-dynamodb");
-const { sendResponse } = require("../../responses");
+const { sendResponse } = require("../responses/index");
 
 const client = new DynamoDBClient();
 const docClient = DynamoDBDocumentClient.from(client);
