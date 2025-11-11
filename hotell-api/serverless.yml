@@ -40,13 +40,18 @@ functions:
       - httpApi:
           path: /rooms
           method: GET
-
   GetAllReservations:
     handler: functions/GetAllReservations/index.handler
     events:
       - httpApi:
           path: /reservation
           method: GET
+  UpdateReservation:
+    handler: functions/UpdateReservation/index.handler
+    events:
+      - httpApi:
+          path: /reservation
+          method: PATCH
 
 resources:
   Resources:
