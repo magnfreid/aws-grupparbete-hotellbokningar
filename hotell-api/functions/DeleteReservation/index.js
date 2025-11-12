@@ -1,73 +1,54 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBDocumentClient, QueryCommand, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
 const { sendResponse } = require("../../responses/index");
 
 const client = new DynamoDBClient({});
 const db = DynamoDBDocumentClient.from(client);
 
 exports.handler = async (event) => {
-  try {
-    const { id } = event.pathParameters;
-    // const { roomId } = JSON.parse(event.queryStringParameters);
 
-      const query = await db.send(
-      new QueryCommand({
-        TableName: "room-db",
-        IndexName: "reservedId-index",
-        KeyConditionExpression: "reservedId = :rid",
-        ExpressionAttributeValues: { ":rid": id }
-      })
-    );
-
-    if (!query.Items || query.Items.length === 0) {
-      return sendResponse(404, { message: `Ingen reservation hittades för reservedId ${id}` });
+   try {
+    // Hämtar reservedId
+    const reservedId = event?.pathParameters?.id;
+    if (!reservedId) {
+      return sendResponse(400, { message: "No reservedId in path: /reservation/{id}" });
     }
 
-    const item = query.Items[0];
+    // Hämtar rummet som är kopplat till reservedIdt
+    const queryRes = await db.send(new QueryCommand({
+      TableName: "room-db",
+      KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+      FilterExpression: "reservedId = :rid", // filtrerar efter reservedId
+      ExpressionAttributeValues: {
+        ":pk": "hotel",
+        ":sk": "ROOM-",
+        ":rid": reservedId  
+      }
+    }));
+      // checkor om något rum finns, annars skickar tillbaka 404
+    const item = queryRes.Items?.[0];
+    if (!item) {
+      return sendResponse(404, { message: `No reservation found with reservedId ${reservedId}` });
+    }
 
-    // const params = {
-    //   TableName: "room-db",
-    //   Key: {
-    //     PK: "hotel",
-    //     SK: `RESERVEDID-${id}`,
-    //     SK: `ROOM-${id}`
-    //   },
-
-    //   UpdateExpression:
-    //     "SET reservedId = :n, checkIn = :n, checkOut = :n, guests = :n, #n = :n, email = :n",
-    //   ExpressionAttributeNames: {
-    //     "#n": "name"
-    //   },
-    //   ExpressionAttributeValues: {
-    //     ":n": null
-    //   },
-
-    //   ReturnValues: "ALL_NEW"
-    // };
-
-     const result = await db.send(
-      new UpdateCommand({
-        TableName: "room-db",
-        Key: { PK: item.PK, SK: item.SK },
-        UpdateExpression:
-          "SET reservedId = :n, checkIn = :n, checkOut = :n, guests = :n, #n = :n, email = :n",
-        ExpressionAttributeNames: { "#n": "name" },
-        ExpressionAttributeValues: { ":n": null },
-        ReturnValues: "ALL_NEW"
-      })
-    );
-
-    // const result = await db.send(new UpdateCommand(params));
+    // uppdaterar/skriver över fälten till null
+    const result= await db.send(new UpdateCommand({
+      TableName: "room-db",
+      Key: { PK: item.PK, SK: item.SK },
+      UpdateExpression: "SET reservedId = :n, checkIn = :n, checkOut = :n, guests = :n, #n = :n, email = :n",
+      ExpressionAttributeNames: { "#n": "name" },
+      ExpressionAttributeValues: { ":n": null },
+      ReturnValues: "ALL_NEW"
+    }));
 
     return sendResponse(200, {
-      message: "Fields set to NULL",
+      message: `Reservation with reservedId ${reservedId} cancelled`,
       reservation: result.Attributes
     });
 
   } catch (err) {
-
-    console.error("Failed to clear reservation", err);
-
-    return sendResponse(400, { error: err.message });
+    console.error("Failed to clear reservation by reservedId", err);
+    return sendResponse(500, { error: err.message });
   }
+  
 };

@@ -64,8 +64,6 @@ resources:
             AttributeType: S
           - AttributeName: SK
             AttributeType: S
-          - AttributeName: reservedId
-            AttributeType: S
         KeySchema:
           - AttributeName: PK
             KeyType: HASH
