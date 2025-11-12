@@ -10,26 +10,54 @@ exports.handler = async (event) => {
     const { id } = event.pathParameters;
     // const { roomId } = JSON.parse(event.queryStringParameters);
 
-    const params = {
-      TableName: "room-db",
-      Key: {
-        PK: "hotel",
-        SK: `ROOM-${id}`
-      },
+      const query = await db.send(
+      new QueryCommand({
+        TableName: "room-db",
+        IndexName: "reservedId-index",
+        KeyConditionExpression: "reservedId = :rid",
+        ExpressionAttributeValues: { ":rid": id }
+      })
+    );
 
-      UpdateExpression:
-        "SET reservedId = :n, checkIn = :n, checkOut = :n, guests = :n, #n = :n, email = :n",
-      ExpressionAttributeNames: {
-        "#n": "name"
-      },
-      ExpressionAttributeValues: {
-        ":n": null
-      },
+    if (!query.Items || query.Items.length === 0) {
+      return sendResponse(404, { message: `Ingen reservation hittades för reservedId ${id}` });
+    }
 
-      ReturnValues: "ALL_NEW"
-    };
+    const item = query.Items[0];
 
-    const result = await db.send(new UpdateCommand(params));
+    // const params = {
+    //   TableName: "room-db",
+    //   Key: {
+    //     PK: "hotel",
+    //     SK: `RESERVEDID-${id}`,
+    //     SK: `ROOM-${id}`
+    //   },
+
+    //   UpdateExpression:
+    //     "SET reservedId = :n, checkIn = :n, checkOut = :n, guests = :n, #n = :n, email = :n",
+    //   ExpressionAttributeNames: {
+    //     "#n": "name"
+    //   },
+    //   ExpressionAttributeValues: {
+    //     ":n": null
+    //   },
+
+    //   ReturnValues: "ALL_NEW"
+    // };
+
+     const result = await db.send(
+      new UpdateCommand({
+        TableName: "room-db",
+        Key: { PK: item.PK, SK: item.SK },
+        UpdateExpression:
+          "SET reservedId = :n, checkIn = :n, checkOut = :n, guests = :n, #n = :n, email = :n",
+        ExpressionAttributeNames: { "#n": "name" },
+        ExpressionAttributeValues: { ":n": null },
+        ReturnValues: "ALL_NEW"
+      })
+    );
+
+    // const result = await db.send(new UpdateCommand(params));
 
     return sendResponse(200, {
       message: "Fields set to NULL",
