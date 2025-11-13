@@ -2,6 +2,7 @@ const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const {
 	DynamoDBDocumentClient,
 	UpdateCommand,
+	QueryCommand,
 } = require("@aws-sdk/lib-dynamodb");
 const { sendResponse } = require("../../responses/index");
 
@@ -10,12 +11,36 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 exports.handler = async (event) => {
 	try {
-		const updateAttributes = JSON.parse(event.body);
-		const roomId = updateAttributes.roomId;
+		const reservedId = event?.pathParameters?.id;
 
-		if (!roomId) return sendResponse(400, { message: "Room id not provided." });
-		if (updateAttributes.reservedId == null)
-			return sendResponse(404, { message: "Reservation not found." });
+		if (!reservedId) {
+			return sendResponse(400, {
+				message: "No reservedId in path: /reservation/{id}",
+			});
+		}
+
+		// Hämtar rummet som är kopplat till reservedIdt
+		const queryRes = await docClient.send(
+			new QueryCommand({
+				TableName: "room-db",
+				KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+				FilterExpression: "reservedId = :rid", // filtrerar efter reservedId
+				ExpressionAttributeValues: {
+					":pk": "hotel",
+					":sk": "ROOM-",
+					":rid": reservedId,
+				},
+			})
+		);
+		// checkor om något rum finns, annars skickar tillbaka 404
+		const room = queryRes.Items?.[0];
+		if (!room) {
+			return sendResponse(404, {
+				message: `No reservation found with reservedId ${reservedId}`,
+			});
+		}
+
+		const updateAttributes = JSON.parse(event.body);
 
 		const updateExpression =
 			"set " +
@@ -41,7 +66,7 @@ exports.handler = async (event) => {
 
 		const command = new UpdateCommand({
 			TableName: "room-db",
-			Key: { PK: "hotel", SK: `ROOM-${roomId}` },
+			Key: { PK: "hotel", SK: room.SK },
 			ReturnValues: "ALL_NEW",
 			UpdateExpression: updateExpression,
 			ExpressionAttributeValues: expressionAttributeValues,
@@ -51,6 +76,6 @@ exports.handler = async (event) => {
 		const response = await docClient.send(command);
 		return sendResponse(200, { message: response.Attributes });
 	} catch (error) {
-		return sendResponse(400, { message: error });
+		return sendResponse(400, { message: error.message });
 	}
 };

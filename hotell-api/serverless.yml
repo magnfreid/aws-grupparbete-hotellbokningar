@@ -50,7 +50,7 @@ functions:
     handler: functions/UpdateReservation/index.handler
     events:
       - httpApi:
-          path: /reservation
+          path: /reservation/{id}
           method: PATCH
 
 resources:
