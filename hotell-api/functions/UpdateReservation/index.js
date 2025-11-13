@@ -41,7 +41,7 @@ exports.handler = async (event) => {
 
 		const command = new UpdateCommand({
 			TableName: "room-db",
-			Key: { PK: "hotel", SK: roomId },
+			Key: { PK: "hotel", SK: `ROOM-${roomId}` },
 			ReturnValues: "ALL_NEW",
 			UpdateExpression: updateExpression,
 			ExpressionAttributeValues: expressionAttributeValues,
@@ -49,7 +49,7 @@ exports.handler = async (event) => {
 		});
 
 		const response = await docClient.send(command);
-		return sendResponse(200, { message: response });
+		return sendResponse(200, { message: response.Attributes });
 	} catch (error) {
 		return sendResponse(400, { message: error });
 	}
